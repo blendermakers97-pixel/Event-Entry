@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Event Entry</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      background: #0f0f0f;
+      color: white;
+      padding: 24px;
+    }
+    h1 { font-size: 26px; margin-bottom: 6px; }
+    .sub { color: #888; font-size: 14px; margin-bottom: 30px; }
+    input {
+      width: 100%; max-width: 340px; padding: 14px;
+      font-size: 22px; border-radius: 10px;
+      border: 1.5px solid #333; background: #1a1a1a;
+      color: white; text-align: center; outline: none;
+    }
+    input:focus { border-color: #555; }
+    button {
+      margin-top: 14px; width: 100%; max-width: 340px;
+      padding: 14px; font-size: 16px; font-weight: 600;
+      border-radius: 10px; border: none; cursor: pointer;
+      background: #2563eb; color: white;
+    }
+    #result {
+      margin-top: 30px; font-size: 26px;
+      font-weight: 700; text-align: center; min-height: 40px;
+    }
+    .allow { color: #22c55e; }
+    .deny  { color: #ef4444; }
+    #spinner { display: none; color: #888; font-size: 14px; margin-top: 14px; }
+  </style>
+</head>
+<body>
+  <h1>Event Entry</h1>
+  <p class="sub">Enter mobile number to verify</p>
+  <input id="mobile" type="tel" placeholder="9876543210" maxlength="15"
+         oninput="clearResult()"
+         onkeydown="if(event.key==='Enter') check()" />
+  <button onclick="check()">Verify</button>
+  <div id="spinner">Checking...</div>
+  <div id="result"></div>
+
+  <script>
+    // Your Apps Script URL — this is the backend that checks the Sheet
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbykfwC4pOQm36CPH08WnepZ7YiqOkgFqWhcX9vY56HVhuFcJab1VaMCJ-Aw_TPcdMhT/exec";
+
+    function clearResult() {
+      document.getElementById('result').textContent = '';
+    }
+
+    function check() {
+      const mobile = document.getElementById('mobile').value.trim();
+      if (!mobile) { alert('Please enter a mobile number'); return; }
+
+      document.getElementById('spinner').style.display = 'block';
+      document.getElementById('result').textContent = '';
+
+      // Instead of google.script.run, we use fetch() to call the backend
+      // This works from any website, not just Google's domain
+      fetch(SCRIPT_URL + "?mobile=" + encodeURIComponent(mobile))
+        .then(res => res.json())
+        .then(data => {
+          document.getElementById('spinner').style.display = 'none';
+          const el = document.getElementById('result');
+          el.textContent = data.allowed ? '✅ ' + data.message : '❌ ' + data.message;
+          el.className = data.allowed ? 'allow' : 'deny';
+          document.getElementById('mobile').value = '';
+          document.getElementById('mobile').focus();
+        })
+        .catch(() => {
+          document.getElementById('spinner').style.display = 'none';
+          document.getElementById('result').textContent = '⚠️ Error. Try again.';
+        });
+    }
+  </script>
+</body>
+</html>
